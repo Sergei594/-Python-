@@ -1,5 +1,6 @@
 import json
 import os
+from datetime import datetime
 
 def load_notes():
     file_path = os.path.join(os.getcwd(), 'notes.json')  
@@ -18,13 +19,15 @@ def save_notes(notes):
 
 def add_note(notes, title, body):
     note_id = len(notes) + 1
-    notes[note_id] = {'title': title, 'body': body}
+    current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    notes[note_id] = {'title': title, 'body': body, 'created_at': current_time, 'updated_at': current_time}
     save_notes(notes)
     print('Заметка добавлена')
 
 def edit_note(notes, note_id, title, body):
     if note_id in notes:
-        notes[note_id] = {'title': title, 'body': body}
+        current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        notes[note_id] = {'title': title, 'body': body, 'created_at': notes[note_id]['created_at'], 'updated_at': current_time}
         save_notes(notes)
         print('Заметка отредактирована')
     else:
@@ -41,7 +44,7 @@ def delete_note_by_id(notes, note_id):
 def delete_note_by_title(notes):
     print("Список заметок:")
     for note_id, note_info in notes.items():
-        print(f'ID: {note_id}, Заголовок: {note_info["title"]}')
+        print(f'ID: {note_id}, Заголовок: {note_info["title"]}, Создано: {note_info["created_at"]}, Последнее изменение: {note_info["updated_at"]}')
     title_to_delete = input('Введите заголовок заметки для удаления: ')
     note_ids_to_delete = [note_id for note_id, note_info in notes.items() if note_info["title"] == title_to_delete]
     if note_ids_to_delete:
@@ -67,23 +70,22 @@ def delete_note(notes):
     else:
         print('Некорректный выбор, попробуйте снова')
 
-def edit_note_by_title(notes):
-    print("Список заметок:")
-    for note_id, note_info in notes.items():
-        print(f'ID: {note_id}, Заголовок: {note_info["title"]}')
-    title_to_edit = input('Введите заголовок заметки для редактирования: ')
-    note_ids_to_edit = [note_id for note_id, note_info in notes.items() if note_info["title"] == title_to_edit]
-    if note_ids_to_edit:
-        for note_id in note_ids_to_edit:
-            title = input('Введите новый заголовок заметки: ')
-            body = input('Введите новый текст заметки: ')
-            edit_note(notes, note_id, title, body)
-    else:
-        print('Заметка с таким заголовком не найдена')
-
 def list_notes(notes):
     for note_id, note_info in notes.items():
-        print(f'ID: {note_id}, Заголовок: {note_info["title"]}')
+        print(f'ID: {note_id}, Заголовок: {note_info["title"]}, Создано: {note_info["created_at"]}, Последнее изменение: {note_info["updated_at"]}')
+
+def filter_notes_by_date(notes):
+    date_str = input("Введите дату в формате 'День-Месяц-Год' (DD-MM-YYYY): ")
+    try:
+        date = datetime.strptime(date_str, "%d-%m-%Y")
+        filtered_notes = {note_id: note_info for note_id, note_info in notes.items() if datetime.strptime(note_info['created_at'], "%Y-%m-%d %H:%M:%S").date() == date.date() or datetime.strptime(note_info['updated_at'], "%Y-%m-%d %H:%M:%S").date() == date.date()}
+        if filtered_notes:
+            print("Найденные заметки:")
+            list_notes(filtered_notes)
+        else:
+            print("Заметки не найдены для указанной даты.")
+    except ValueError:
+        print("Некорректный формат даты. Пожалуйста, введите дату в формате 'День-Месяц-Год' (DD-MM-YYYY).")
 
 notes = load_notes()
 
@@ -92,7 +94,8 @@ while True:
     print('2. Добавить заметку')
     print('3. Редактировать заметку')
     print('4. Удалить заметку')
-    print('5. Выйти')
+    print('5. Найти заметки по дате')
+    print('6. Выйти')
     
     choice = input('Выберите действие: ')
     
@@ -103,10 +106,15 @@ while True:
         body = input('Введите текст заметки: ')
         add_note(notes, title, body)
     elif choice == '3':
-        edit_note_by_title(notes)
+        note_id = int(input('Введите ID заметки для редактирования: '))
+        title = input('Введите новый заголовок заметки: ')
+        body = input('Введите новый текст заметки: ')
+        edit_note(notes, note_id, title, body)
     elif choice == '4':
         delete_note(notes)
     elif choice == '5':
+        filter_notes_by_date(notes)
+    elif choice == '6':
         break
     else:
-        print('Некорректный выбор, попробуйте снова')
+        print('Некорректный выбор,
